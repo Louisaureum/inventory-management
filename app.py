@@ -6,6 +6,28 @@ app = Flask(__name__)
 # OpenFoodFacts wants a user agent so they know who's calling
 HEADERS = {"User-Agent": "InventoryManagementSystem/1.0 (student@example.com)"}
 
+# ---- Home route ----
+
+@app.route('/')
+def home():
+    return {
+        "message": "Inventory Management API",
+        "endpoints": {
+            "items": {
+                "GET /items": "List all items",
+                "GET /items/<id>": "Get item by ID",
+                "POST /items": "Create new item",
+                "PATCH /items/<id>": "Update item",
+                "DELETE /items/<id>": "Delete item"
+            },
+            "external": {
+                "GET /external/barcode/<barcode>": "Search by barcode",
+                "GET /external/search?name=<query>": "Search by name",
+                "POST /external/add/<barcode>": "Add product to inventory"
+            }
+        }
+    }, 200
+
 # store items in memory (resets when server restarts)
 items = []
 next_id = 1
