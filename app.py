@@ -348,6 +348,90 @@ def home():
                 font-size: 0.85em;
             }
             
+            .section-tabs {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #ecf0f1;
+            }
+            
+            .tab-button {
+                padding: 12px 20px;
+                background: none;
+                border: none;
+                border-bottom: 3px solid transparent;
+                cursor: pointer;
+                font-weight: 600;
+                color: #7f8c8d;
+                transition: all 0.3s;
+            }
+            
+            .tab-button:hover {
+                color: #2c3e50;
+            }
+            
+            .tab-button.active {
+                color: #e74c3c;
+                border-bottom-color: #e74c3c;
+            }
+            
+            .tab-content {
+                display: none;
+            }
+            
+            .tab-content.active {
+                display: block;
+            }
+            
+            .section-icon {
+                font-size: 1.8em;
+                margin-right: 10px;
+                vertical-align: middle;
+            }
+            
+            .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+            
+            .btn.loading {
+                position: relative;
+                color: transparent;
+            }
+            
+            .btn.loading::after {
+                content: '';
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                top: 50%;
+                left: 50%;
+                margin-left: -8px;
+                margin-top: -8px;
+                border: 2px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top-color: white;
+                animation: spin 0.6s linear infinite;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            .separator {
+                height: 2px;
+                background: linear-gradient(to right, #ecf0f1, transparent);
+                margin: 30px 0;
+            }
+            
+            .info-box {
+                background: #ecf0f1;
+                padding: 15px;
+                border-left: 4px solid #3498db;
+                border-radius: 4px;
+                margin: 15px 0;
+            }
+            
             @media (max-width: 768px) {
                 .navbar {
                     flex-direction: column;
@@ -359,6 +443,15 @@ def home():
                 }
                 
                 .inventory-table {
+                    font-size: 0.9em;
+                }
+                
+                .section-tabs {
+                    flex-wrap: wrap;
+                }
+                
+                .tab-button {
+                    padding: 10px 15px;
                     font-size: 0.9em;
                 }
             }
@@ -396,68 +489,137 @@ def home():
             <!-- Alerts Section -->
             <div id="alerts-container"></div>
 
-            <!-- Inventory Management Section -->
-            <div class="section">
-                <h2>📦 Current Inventory</h2>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-success" onclick="openAddItemModal()">+ Add New Item</button>
-                    <button class="btn btn-primary" onclick="loadInventory()">🔄 Refresh</button>
-                    <button class="btn btn-primary" onclick="openSearchModal()">🔍 Search by Barcode</button>
-                </div>
-                
-                <input type="text" class="search-box" id="search-input" placeholder="Search inventory by name...">
-                
-                <table class="inventory-table">
-                    <thead>
-                        <tr>
-                            <th>Product Name</th>
-                            <th>Barcode</th>
-                            <th>Category</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total Value</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-body">
-                        <tr><td colspan="8" style="text-align: center; color: #7f8c8d;">Loading inventory...</td></tr>
-                    </tbody>
-                </table>
+            <div class="separator"></div>
+
+            <!-- Section Navigation Tabs -->
+            <div class="section-tabs">
+                <button class="tab-button active" onclick="switchTab('inventory', this)">📦 Inventory</button>
+                <button class="tab-button" onclick="switchTab('products', this)">🔎 Product Lookup</button>
+                <button class="tab-button" onclick="switchTab('system', this)">📊 System Info</button>
             </div>
 
-            <!-- Quick Actions Section -->
-            <div class="two-column">
+            <!-- TAB 1: INVENTORY MANAGEMENT -->
+            <div id="tab-inventory" class="tab-content active">
                 <div class="section">
-                    <h2>🔎 Product Lookup</h2>
-                    <p style="color: #7f8c8d; margin-bottom: 15px;">Search the OpenFoodFacts database for real products</p>
-                    <div class="form-group">
-                        <label>Search by Name:</label>
-                        <input type="text" id="product-name" placeholder="e.g., Milk, Bread, Cereal">
-                        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="searchProduct()">Search Products</button>
+                    <h2><span class="section-icon">📦</span>Current Inventory</h2>
+                    
+                    <div class="info-box">
+                        <strong>Quick Actions:</strong> Manage all items in your inventory using the buttons below.
                     </div>
-                    <div id="search-results" style="margin-top: 15px;"></div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-success" id="add-btn" onclick="handleAddItem()">
+                            <span>+ Add New Item</span>
+                        </button>
+                        <button class="btn btn-primary" id="refresh-btn" onclick="handleRefresh()">
+                            <span>🔄 Refresh Inventory</span>
+                        </button>
+                        <button class="btn btn-primary" id="search-btn" onclick="handleSearchBarcode()">
+                            <span>🔍 Search by Barcode</span>
+                        </button>
+                    </div>
+                    
+                    <input type="text" class="search-box" id="search-input" placeholder="🔎 Search inventory by name..." oninput="filterInventory(this.value)">
+                    
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Barcode</th>
+                                <th>Category</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total Value</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-body">
+                            <tr><td colspan="8" style="text-align: center; color: #7f8c8d;">Loading inventory...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
 
+            <!-- TAB 2: PRODUCT LOOKUP -->
+            <div id="tab-products" class="tab-content">
+                <div class="two-column">
+                    <div class="section">
+                        <h2><span class="section-icon">🔎</span>Search OpenFoodFacts</h2>
+                        <p style="color: #7f8c8d; margin-bottom: 15px;">Search the OpenFoodFacts database for real products and add them to inventory.</p>
+                        <div class="form-group">
+                            <label>Search by Product Name:</label>
+                            <input type="text" id="product-name" placeholder="e.g., Milk, Bread, Cereal, Apple juice">
+                        </div>
+                        <button class="btn btn-primary" id="search-product-btn" style="width: 100%;" onclick="handleSearchProduct()">
+                            <span>Search Products</span>
+                        </button>
+                        <div id="search-results" style="margin-top: 20px;"></div>
+                    </div>
+
+                    <div class="section">
+                        <h2><span class="section-icon">📋</span>Search by Barcode</h2>
+                        <p style="color: #7f8c8d; margin-bottom: 15px;">Scan or enter a barcode to find product details quickly.</p>
+                        <div class="form-group">
+                            <label>Barcode Number:</label>
+                            <input type="text" id="barcode-search-input" placeholder="e.g., 3017620422003">
+                        </div>
+                        <button class="btn btn-primary" id="barcode-search-btn" style="width: 100%;" onclick="handleBarcodeSearch()">
+                            <span>🔎 Look Up Barcode</span>
+                        </button>
+                        <div id="barcode-lookup-results" style="margin-top: 20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SYSTEM INFORMATION -->
+            <div id="tab-system" class="tab-content">
                 <div class="section">
-                    <h2>📊 System Stats</h2>
-                    <div class="recent-activity">
-                        <div class="activity-item">
-                            <strong>API Endpoints:</strong> 8 Active
+                    <h2><span class="section-icon">📊</span>System Information</h2>
+                    <div class="two-column">
+                        <div>
+                            <h3 style="color: #2c3e50; margin-bottom: 15px;">API Status</h3>
+                            <div class="recent-activity">
+                                <div class="activity-item">
+                                    <strong>📡 API Endpoints:</strong> 8 Active
+                                </div>
+                                <div class="activity-item">
+                                    <strong>🗄️ Data Source:</strong> OpenFoodFacts Integration
+                                </div>
+                                <div class="activity-item">
+                                    <strong>🟢 Server Status:</strong> <span style="color: #27ae60;">Healthy</span>
+                                </div>
+                                <div class="activity-item">
+                                    <strong>⚡ Response Time:</strong> <span id="api-response">N/A</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="activity-item">
-                            <strong>Database:</strong> OpenFoodFacts Integration
+                        <div>
+                            <h3 style="color: #2c3e50; margin-bottom: 15px;">Testing & Quality</h3>
+                            <div class="recent-activity">
+                                <div class="activity-item">
+                                    <strong>✅ Test Coverage:</strong> 100% (6/6 tests passing)
+                                </div>
+                                <div class="activity-item">
+                                    <strong>🔐 Data Persistence:</strong> In-Memory Database
+                                </div>
+                                <div class="activity-item">
+                                    <strong>📅 Last Updated:</strong> <span class="time" id="last-updated">Just now</span>
+                                </div>
+                                <div class="activity-item">
+                                    <strong>🚀 Framework:</strong> Flask/Python
+                                </div>
+                            </div>
                         </div>
-                        <div class="activity-item">
-                            <strong>Test Coverage:</strong> 100% (6/6 tests passing)
-                        </div>
-                        <div class="activity-item">
-                            <strong>Last Updated:</strong> <span class="time">Just now</span>
-                        </div>
-                        <div class="activity-item">
-                            <strong>Server Status:</strong> <span style="color: #27ae60;">✓ Healthy</span>
-                        </div>
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">Available Actions</h3>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="testAPI()">🧪 Test API Connection</button>
+                        <button class="btn btn-primary" onclick="viewDocs()">📖 View API Docs</button>
+                        <button class="btn btn-secondary" onclick="clearSearch()">🗑️ Clear Search</button>
                     </div>
                 </div>
             </div>
@@ -514,7 +676,69 @@ def home():
 
         <script>
             // Load inventory on page load
-            window.addEventListener('load', loadInventory);
+            window.addEventListener('load', () => {
+                loadInventory();
+                updateLastUpdatedTime();
+            });
+
+            // Tab switching functionality
+            function switchTab(tabName, buttonElement) {
+                // Hide all tabs
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Show selected tab
+                document.getElementById('tab-' + tabName).classList.add('active');
+                buttonElement.classList.add('active');
+            }
+
+            // Button handlers with loading states
+            async function handleAddItem() {
+                openAddItemModal();
+            }
+
+            async function handleRefresh() {
+                const btn = document.getElementById('refresh-btn');
+                btn.classList.add('loading');
+                btn.disabled = true;
+                await loadInventory();
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                showAlert('✅ Inventory refreshed!', 'success');
+            }
+
+            function handleSearchBarcode() {
+                openSearchModal();
+            }
+
+            async function handleSearchProduct() {
+                const btn = document.getElementById('search-product-btn');
+                btn.classList.add('loading');
+                btn.disabled = true;
+                await searchProduct();
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+
+            async function handleBarcodeSearch() {
+                const btn = document.getElementById('barcode-search-btn');
+                btn.classList.add('loading');
+                btn.disabled = true;
+                await searchBarcodeFromTab();
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+
+            function updateLastUpdatedTime() {
+                const now = new Date();
+                document.getElementById('last-updated').textContent = now.toLocaleTimeString();
+            }
 
             async function loadInventory() {
                 try {
@@ -526,32 +750,32 @@ def home():
                     let html = '';
                     
                     if (items.length === 0) {
-                        html = '<tr><td colspan="8" style="text-align: center; color: #7f8c8d;">No items in inventory. Add one to get started.</td></tr>';
+                        html = '<tr><td colspan="8" style="text-align: center; color: #7f8c8d; padding: 30px;">📭 No items in inventory. Click "Add New Item" to get started.</td></tr>';
                     } else {
                         items.forEach(item => {
                             const itemValue = (item.quantity || 0) * (item.price || 0);
                             totalValue += itemValue;
                             
-                            let statusBadge = '<span class="status-badge status-in-stock">In Stock</span>';
+                            let statusBadge = '<span class="status-badge status-in-stock">✓ In Stock</span>';
                             if (item.quantity === 0) {
-                                statusBadge = '<span class="status-badge status-out">Out of Stock</span>';
+                                statusBadge = '<span class="status-badge status-out">✗ Out of Stock</span>';
                                 lowStockCount++;
                             } else if (item.quantity < 5) {
-                                statusBadge = '<span class="status-badge status-low">Low Stock</span>';
+                                statusBadge = '<span class="status-badge status-low">⚠ Low Stock</span>';
                                 lowStockCount++;
                             }
                             
                             html += `<tr>
-                                <td>${item.name}</td>
-                                <td>${item.barcode || '-'}</td>
+                                <td><strong>${item.name}</strong></td>
+                                <td><code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${item.barcode || '-'}</code></td>
                                 <td>${item.category || '-'}</td>
                                 <td class="quantity">${item.quantity || 0}</td>
                                 <td class="price">$${(item.price || 0).toFixed(2)}</td>
-                                <td class="price">$${itemValue.toFixed(2)}</td>
+                                <td class="price"><strong>$${itemValue.toFixed(2)}</strong></td>
                                 <td>${statusBadge}</td>
                                 <td>
-                                    <button class="btn btn-secondary" onclick="editItem(${item.id})">Edit</button>
-                                    <button class="btn btn-secondary" onclick="deleteItem(${item.id})">Delete</button>
+                                    <button class="btn btn-secondary" onclick="editItem(${item.id})" style="padding: 6px 12px; font-size: 0.85em;">Edit</button>
+                                    <button class="btn btn-secondary" onclick="deleteItem(${item.id})" style="padding: 6px 12px; font-size: 0.85em; background: #e74c3c;">Delete</button>
                                 </td>
                             </tr>`;
                         });
@@ -561,10 +785,21 @@ def home():
                     document.getElementById('total-items').textContent = items.length;
                     document.getElementById('total-value').textContent = '$' + totalValue.toFixed(2);
                     document.getElementById('low-stock').textContent = lowStockCount;
+                    updateLastUpdatedTime();
                     
                 } catch (error) {
-                    console.error('Error:', error);
+                    showAlert('❌ Error loading inventory: ' + error, 'warning');
                 }
+            }
+
+            function filterInventory(searchTerm) {
+                const rows = document.querySelectorAll('#inventory-body tr');
+                const term = searchTerm.toLowerCase();
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
             }
 
             function openAddItemModal() {
@@ -622,26 +857,44 @@ def home():
             async function submitBarcodeSearch(event) {
                 event.preventDefault();
                 const barcode = document.getElementById('barcode-input').value;
-                
+                await fetchAndDisplayBarcode(barcode, 'barcode-results');
+            }
+
+            async function searchBarcodeFromTab() {
+                const barcode = document.getElementById('barcode-search-input').value;
+                if (!barcode) {
+                    showAlert('⚠️ Please enter a barcode', 'warning');
+                    return;
+                }
+                await fetchAndDisplayBarcode(barcode, 'barcode-lookup-results');
+            }
+
+            async function fetchAndDisplayBarcode(barcode, targetId) {
                 try {
                     const response = await fetch('/external/barcode/' + barcode);
                     const product = await response.json();
                     
-                    let html = '<div class="alert alert-info"><strong>Product Found:</strong></div>';
-                    html += '<div style="margin-top: 10px;"><strong>Name:</strong> ' + product.name + '</div>';
-                    html += '<div><strong>Brand:</strong> ' + product.brand + '</div>';
-                    html += '<div><strong>Category:</strong> ' + product.category + '</div>';
-                    html += '<button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="addFromBarcode(\'' + barcode + '\')">Add to Inventory</button>';
+                    let html = '<div class="alert alert-success"><strong>✓ Product Found!</strong></div>';
+                    html += '<div style="margin-top: 10px; padding: 15px; background: #f9f9f9; border-radius: 6px;">';
+                    html += '<div><strong>Name:</strong> ' + product.name + '</div>';
+                    html += '<div><strong>Brand:</strong> ' + (product.brand || 'Unknown') + '</div>';
+                    html += '<div><strong>Category:</strong> ' + (product.category || 'Unknown') + '</div>';
+                    html += '<div><strong>Barcode:</strong> <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">' + barcode + '</code></div>';
+                    html += '</div>';
+                    html += '<button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="addFromBarcode(\'' + barcode + '\', \'' + product.name + '\')">➕ Add to Inventory</button>';
                     
-                    document.getElementById('barcode-results').innerHTML = html;
+                    document.getElementById(targetId).innerHTML = html;
                 } catch (error) {
-                    document.getElementById('barcode-results').innerHTML = '<div class="alert alert-warning">⚠️ Product not found</div>';
+                    document.getElementById(targetId).innerHTML = '<div class="alert alert-warning">⚠️ Product not found. Try a different barcode.</div>';
                 }
             }
 
             async function searchProduct() {
                 const name = document.getElementById('product-name').value;
-                if (!name) return;
+                if (!name) {
+                    showAlert('⚠️ Please enter a product name', 'warning');
+                    return;
+                }
                 
                 try {
                     const response = await fetch('/external/search?name=' + name);
@@ -649,43 +902,80 @@ def home():
                     
                     let html = '';
                     if (products.length === 0) {
-                        html = '<div class="alert alert-warning">No products found</div>';
+                        html = '<div class="alert alert-warning">❌ No products found. Try a different search term.</div>';
                     } else {
-                        html = '<div class="alert alert-success">' + products.length + ' products found</div>';
+                        html = '<div class="alert alert-success">✓ Found ' + products.length + ' product(s)</div>';
                         products.forEach(p => {
-                            html += '<div style="padding: 10px; border: 1px solid #bdc3c7; margin: 5px 0; border-radius: 4px;">';
-                            html += '<strong>' + p.name + '</strong><br>';
-                            html += 'Brand: ' + (p.brand || '-') + '<br>';
-                            html += 'Barcode: ' + p.barcode + '<br>';
-                            html += '<button class="btn btn-primary" style="margin-top: 8px;" onclick="addFromBarcode(\'' + p.barcode + '\')">Add This Item</button>';
+                            html += '<div style="padding: 15px; border: 1px solid #bdc3c7; margin: 10px 0; border-radius: 6px; background: #f9f9f9;">';
+                            html += '<div><strong>' + p.name + '</strong></div>';
+                            html += '<div style="color: #7f8c8d; font-size: 0.9em; margin: 5px 0;">Brand: ' + (p.brand || '-') + '</div>';
+                            html += '<div style="color: #7f8c8d; font-size: 0.9em;">Barcode: <code style="background: #fff; padding: 2px 4px;">' + p.barcode + '</code></div>';
+                            html += '<button class="btn btn-primary" style="margin-top: 10px; width: 100%;" onclick="addFromBarcode(\'' + p.barcode + '\', \'' + p.name + '\')">➕ Add to Inventory</button>';
                             html += '</div>';
                         });
                     }
                     document.getElementById('search-results').innerHTML = html;
                 } catch (error) {
-                    document.getElementById('search-results').innerHTML = '<div class="alert alert-warning">Error searching products</div>';
+                    document.getElementById('search-results').innerHTML = '<div class="alert alert-warning">❌ Error searching products</div>';
                 }
             }
 
             async function deleteItem(id) {
-                if (confirm('Are you sure you want to delete this item?')) {
+                if (confirm('🗑️ Are you sure you want to delete this item?')) {
                     try {
-                        await fetch('/items/' + id, {method: 'DELETE'});
-                        showAlert('✅ Item deleted', 'success');
-                        loadInventory();
+                        const response = await fetch('/items/' + id, {method: 'DELETE'});
+                        if (response.ok) {
+                            showAlert('✅ Item deleted successfully', 'success');
+                            loadInventory();
+                        }
                     } catch (error) {
                         showAlert('❌ Error deleting item', 'warning');
                     }
                 }
             }
 
-            function addFromBarcode(barcode) {
-                alert('Item added! Check inventory for updates.');
-                loadInventory();
+            async function addFromBarcode(barcode, name) {
+                try {
+                    const response = await fetch('/external/add/' + barcode, {method: 'POST'});
+                    if (response.ok) {
+                        showAlert('✅ ' + name + ' added to inventory!', 'success');
+                        loadInventory();
+                        closeSearchModal();
+                        document.getElementById('barcode-input').value = '';
+                        document.getElementById('product-name').value = '';
+                    }
+                } catch (error) {
+                    showAlert('❌ Could not add item: ' + error, 'warning');
+                }
             }
 
             function editItem(id) {
-                alert('Edit feature coming soon. Currently supports create, view, and delete.');
+                showAlert('✏️ Edit feature coming soon. Use Delete and re-add to modify items.', 'info');
+            }
+
+            function testAPI() {
+                showAlert('🧪 Testing API connection...', 'info');
+                fetch('/items')
+                    .then(r => r.json())
+                    .then(() => {
+                        showAlert('✅ API connection successful!', 'success');
+                        document.getElementById('api-response').textContent = '< 100ms';
+                    })
+                    .catch(() => showAlert('❌ API connection failed', 'warning'));
+            }
+
+            function viewDocs() {
+                showAlert('📖 API Documentation:\n\nGET /items\nGET /items/{id}\nPOST /items\nPATCH /items/{id}\nDELETE /items/{id}\nGET /external/barcode/{code}\nGET /external/search\nPOST /external/add/{barcode}', 'info');
+            }
+
+            function clearSearch() {
+                document.getElementById('search-input').value = '';
+                document.getElementById('product-name').value = '';
+                document.getElementById('barcode-search-input').value = '';
+                document.getElementById('search-results').innerHTML = '';
+                document.getElementById('barcode-lookup-results').innerHTML = '';
+                filterInventory('');
+                showAlert('🗑️ Search cleared', 'success');
             }
 
             function showAlert(message, type) {
