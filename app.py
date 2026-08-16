@@ -10,23 +10,136 @@ HEADERS = {"User-Agent": "InventoryManagementSystem/1.0 (student@example.com)"}
 
 @app.route('/')
 def home():
-    return {
-        "message": "Inventory Management API",
-        "endpoints": {
-            "items": {
-                "GET /items": "List all items",
-                "GET /items/<id>": "Get item by ID",
-                "POST /items": "Create new item",
-                "PATCH /items/<id>": "Update item",
-                "DELETE /items/<id>": "Delete item"
-            },
-            "external": {
-                "GET /external/barcode/<barcode>": "Search by barcode",
-                "GET /external/search?name=<query>": "Search by name",
-                "POST /external/add/<barcode>": "Add product to inventory"
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Inventory Management API</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f5f5f5;
             }
-        }
-    }, 200
+            h1 {
+                color: #333;
+                border-bottom: 3px solid #007bff;
+                padding-bottom: 10px;
+            }
+            h2 {
+                color: #007bff;
+                margin-top: 30px;
+            }
+            .endpoint {
+                background: white;
+                padding: 12px;
+                margin: 8px 0;
+                border-left: 4px solid #28a745;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+            .method {
+                font-weight: bold;
+                color: #007bff;
+            }
+            .description {
+                color: #666;
+                margin-left: 10px;
+            }
+            .section {
+                background: white;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .test-link {
+                color: #007bff;
+                text-decoration: none;
+                font-weight: bold;
+            }
+            .test-link:hover {
+                text-decoration: underline;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>📦 Inventory Management API</h1>
+        
+        <div class="section">
+            <h2>Welcome!</h2>
+            <p>This is a Flask REST API for managing inventory items with integration to the OpenFoodFacts database.</p>
+        </div>
+
+        <div class="section">
+            <h2>📋 CRUD Operations</h2>
+            <div class="endpoint">
+                <span class="method">GET</span> <code>/items</code>
+                <span class="description">- List all inventory items</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> <code>/items/&lt;id&gt;</code>
+                <span class="description">- Get a specific item by ID</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">POST</span> <code>/items</code>
+                <span class="description">- Create a new inventory item</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">PATCH</span> <code>/items/&lt;id&gt;</code>
+                <span class="description">- Update an existing item</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">DELETE</span> <code>/items/&lt;id&gt;</code>
+                <span class="description">- Delete an item</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔍 External API (OpenFoodFacts)</h2>
+            <div class="endpoint">
+                <span class="method">GET</span> <code>/external/barcode/&lt;barcode&gt;</code>
+                <span class="description">- Search for product by barcode</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">GET</span> <code>/external/search?name=&lt;query&gt;</code>
+                <span class="description">- Search for products by name</span>
+            </div>
+            <div class="endpoint">
+                <span class="method">POST</span> <code>/external/add/&lt;barcode&gt;</code>
+                <span class="description">- Fetch and add product to inventory</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🚀 Quick Test</h2>
+            <p>Try these links:</p>
+            <ul>
+                <li><a href="/items" class="test-link">View all items</a></li>
+                <li><a href="/external/barcode/3017620422003" class="test-link">Search barcode 3017620422003</a></li>
+                <li><a href="/external/search?name=milk" class="test-link">Search for "milk"</a></li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>💡 Example Data</h2>
+            <p>Create an item with JSON POST to <code>/items</code>:</p>
+            <pre>{
+    "name": "Milk",
+    "barcode": "123456",
+    "category": "Dairy",
+    "quantity": 5,
+    "price": 3.99,
+    "supplier": "Farm Fresh",
+    "description": "Organic whole milk"
+}</pre>
+        </div>
+    </body>
+    </html>
+    """
+    return html
 
 # store items in memory (resets when server restarts)
 items = []
